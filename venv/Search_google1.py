@@ -2,14 +2,16 @@ import requests
 import json
 import urllib
 from googlesearch import search
+from bs4 import BeautifulSoup
+import requests
 
-zoekterm = 'Kobus Bijker'
-woonplaats = 'Winsum'
-werkgever = 'Hanzehogeschool'
+#zoekterm = 'Kobus Bijker'
+#woonplaats = 'Winsum'
+#werkgever = 'Hanzehogeschool'
 
-#zoekterm = input('Naam persoon: ')
-#woonplaats = input('Woonplaats (?=niet weten of op zoeken): ')
-#werkgever = input('Werkgever/School (?=niet weten of op zoeken): ')
+zoekterm = input('Naam persoon: ')
+woonplaats = input('Woonplaats (?=niet weten of op zoeken): ')
+werkgever = input('Werkgever/School (?=niet weten of op zoeken): ')
 
 exactname = '['+zoekterm+']'
 results_EN = search(zoekterm, lang='english', num=10, stop=10,)
@@ -53,3 +55,54 @@ for url in Res_Alg:
     print(url)
 
 print(Res_Alg)
+
+# Verdere analyse sites;
+
+namen = zoekterm.split(' ')
+namen.append(woonplaats)
+namen.append(werkgever)
+Hoofdletters ='ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+letters = 'abcdefghijklmnopqrstuvwxyzïàë'
+tekens = ['/[]{}\|_']
+
+TekstenInteressant = {}
+Termen_url = {}
+
+for url in Res_Alg:
+    Termen = []
+    html_content = requests.get(url).text
+    soup = BeautifulSoup(html_content, "lxml")
+    try:
+        Woorden_soup = str(soup).split(' ')
+        for Woord in Woorden_soup:
+                Teken_letter = True
+                for letter in Woord:
+                    if letter in tekens: Teken_letter = False
+                    if (letter in letters) and Teken_letter:
+                        Teken_letter = True
+                    else: Teken_letter = False
+                if (Woord[0] in Hoofdletters) and (len(Woord) > 4) and Teken_letter:
+                        Termen.append(Woord)
+    except: print(f'Kan html-content van {url} niet lezen.')
+    #print(soup.prettify()) # print the parsed data of html
+    try:
+        print(soup.title.text)
+        content = soup.title.text
+        Woorden_content = content.split(' ')
+        tel = 0
+        for word in namen:
+            if word in content and tel ==0 :
+               TekstenInteressant[url] = content
+               tel+=1
+        for Woord in Woorden_content:
+                for letter in Woord:
+                    if letter in Hoofdletters and len(Woord) > 5:
+                        Termen.append(Woord)
+        Termen_url[url]= Termen
+
+
+    except:
+        print(f'Website {url} heeft blijkbaar geen text-title.')
+
+print(Termen_url)
+print(TekstenInteressant)
