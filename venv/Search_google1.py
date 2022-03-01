@@ -30,7 +30,7 @@ Res_NL = []
 for url in results_NL:
     if url not in Res_Alg:
         Res_NL.append(url)
-        if not 'crdev' in url: Res_Alg.append(url)
+        if not 'crdev' in url: Res_Alg.append(url) #cookie websites negeren
         #print(url)
 print('Nog even geduld aub...websites worden gescand..')
 zoekterm2 = exactname +' AND '+ woonplaats
