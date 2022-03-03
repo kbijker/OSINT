@@ -9,13 +9,54 @@ from datetime import datetime
 
 dateTimeObj = datetime.now()
 
-#zoekterm = 'Kobus Bijker'
-#woonplaats = 'Winsum'
-#werkgever = 'Hanzehogeschool'
+def Woorden(text_soup):
+    Hoofdletters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    letters = 'abcdefghijklmnopqrstuvwxyzïàë'
+    tekens = ['/[]{}\|_']
+    woorden = []
+    for woord in text_soup:
+        Teken_letter = True
+        for letter in Woord:
+            if letter in tekens: Teken_letter = False
+            if (letter in letters) and Teken_letter:
+                Teken_letter = True
+            else:
+                Teken_letter = False
+        try:
+            if (Woord[0] in Hoofdletters) and (len(Woord) > 4) and Teken_letter:
+                woorden.append(Woord)
+        except:
+            pass
+    return woorden
 
-zoekterm = input('Naam persoon: ')
-woonplaats = input('Woonplaats (?=niet weten of op zoeken): ')
-werkgever = input('Werkgever/School (?=niet weten of op zoeken): ')
+
+def Text_termen_url(url):
+    try:
+        html = urlopen(url).read()
+        soup = BeautifulSoup(html, features="html.parser")
+        for script in soup(["script", "style"]):
+           script.extract()  # rip it out
+
+        text = soup.get_text()
+        lines = (line.strip() for line in text.splitlines())
+        # break multi-headlines into a line each
+        chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+        # drop blank lines
+        text = '\n'.join(chunk for chunk in chunks if chunk)
+        return text
+    except:
+        return 'niets'
+
+zoekterm = 'Kobus Bijker'
+woonplaats = 'Winsum'
+werkgever = 'Hanzehogeschool'
+
+
+
+
+#zoekterm = input('Naam persoon: ')
+#woonplaats = input('Woonplaats (?=niet weten of op zoeken): ')
+#werkgever = input('Werkgever/School (?=niet weten of op zoeken): ')
 
 exactname = '['+zoekterm+']'
 results_EN = search(zoekterm, lang='english', num=10, stop=10,)
@@ -77,9 +118,10 @@ Termen_url = {}
 
 for url in Res_Alg:
     Termen = []
-    html_content = requests.get(url).text
-    soup = BeautifulSoup(html_content, "lxml")
     try:
+        html_content = requests.get(url).text
+        soup = BeautifulSoup(html_content, "lxml")
+
         Woorden_soup = str(soup).split(' ')
         for Woord in Woorden_soup:
                 Teken_letter = True
@@ -92,6 +134,14 @@ for url in Res_Alg:
                         Termen.append(Woord)
     except: print(f'Kan html-content van {url} niet lezen.')
     #print(soup.prettify()) # print the parsed data of html
+    tekst = Text_termen_url(url)
+    print(tekst)
+    if tekst != 'niets':
+        Termen1 =Woorden(tekst)
+        Termen.append(Termen1)
+
+
+
     try:
         print(soup.title.text)
         content = soup.title.text
@@ -128,6 +178,6 @@ with open(file, 'w') as f:
         f.write(f'site: {url}:\n')
         f.write(f'titel info: {termen_cont[1]}\n')
         f.write(f'Interessante termen: {termen_cont[0]}\n')
-        f.write('-------------------------------------------------------')
+        f.write('-------------------------------------------------------\n')
     f.close()
 print(f'Rapport {file} is aangemaakt')
